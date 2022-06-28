@@ -1,0 +1,26 @@
+body {
+	background-color: white
+}
+
+h2 {
+	color: black
+}
+
+button,span {
+	color: black;
+	font-size: 16px
+}
+
+button {
+	background-color: white;
+	border-color: black
+}
+
+.top {
+	background-color: white
+}
+
+.top:hover {
+	background-color: black;
+	color: white;
+}

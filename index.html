@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>The Infinite Nerf</title>
+		<link rel="stylesheet" type="text/css" href="style.css"/>
+		<div><link rel="stylesheet" type="text/css" href="light.css"/></div>
+		<script src="ON.js"></script>
+		<script src="load.js"></script>
+	</head>
+	<body>
+		<div style="cursor:default">
+			<button onclick="tab(0)" class="top">Main</button>
+			<button onclick="tab(1)" class="top">Effects</button>
+			<button onclick="tab(2)" class="top">Help</button>
+			<button onclick="tab(3)" class="top">Limit</button>
+		</div>
+		<div id="utab0">
+			<br><h2 id="points">You have 0 points</h2>
+			<b id="pointGain">You are gaining 0 points per real-life second</b><br><br><br>
+			<span id="dilater">You have 0 dilaters multiplying Time Speed by 0.00</span><br>
+			<span id="compress">You have 0 compressors increasing the Production Cap by 1</span><br><br>
+			<button id="dilaterUpg" onclick="game.func.getDilater()">
+				Reset Progress to get a Dilater<br><br><span id="dilaterCost"></span>
+			</button>
+			<button id="compressUpg" onclick="game.func.getComp()">
+				Reset Previous Progress to get a Compressor<br><br><span id="compCost"></span>
+			</button><br><br><br><br>
+			<h2 id="tuons">You have 0 tuons dividing Time Speed by 1.00</h2>
+			<b id="tuonGain">You are gaining 0 tuons per real-life second</b><br><br><br><br>
+			<h2 id="timePassed"> of game time have passed</h2>
+		</div><div id="utab1">
+			<br><span>Your Base Point Gain is 1</span><br>
+			<span>Point Prodution is divided by <b>∞</b></span><br>
+			<span id="fxPointMult">Point Production is then multiplied by 1</span><br>
+			<span id="fxProcap">You can only produce 0 seconds of production</span><br>
+			<span id="fxTime">Time is 16.00x slower than real-time</span><br>
+			<span>You lose 10% of Points every second (affected by Time Speed)</span><br>
+			<span>Beyond 4 Dilaters, Dilater Effect is weaker</span>
+		</div><div id="utab2">
+			<h3>Early Game</h3>
+			<span>
+				You are now in the game and you can see two buttons: Dilaters and Compressors<br>
+				Dilaters multiply Time Speed but at the cost of resetting Production<br>
+				Compressors increase the duration of Production but at the cost of resetting Production and Dilaters<br>
+				Start off by getting a Dilater, then get a Compressor, then get another Dilater<br>
+				As you can see you will start to generate Points, but the unit is ε?<br>
+				ε is a quantity that means infinitely small or 1/∞ in the hyper-real numbers<br>
+				10% of your Points are lost every second which is negligeble<br>
+				Another resource is being generated: Tuons<br>
+				Tuons are the bane of your production as it divides Time Speed and boosts its own gain<br>
+				Just do a Dilater reset then Compressor reset if you can until you unlock the next layer
+			</span>
+			<h3>Limits</h3>
+			<span>
+				This is still being worked on
+			</span>
+		</div><div id="utab3">
+			<br><h2 id="infismall">You have 0 limits</h2><br>
+			<button class="upgrade" onclick="game.func.getLimUp(0)">
+				Compressors give free Dilaters<br><br><span id="limUpReq0">Cost: 1</span>
+			</button><button class="upgrade" onclick="game.func.getLimUp(1)">
+				Tuon effect is 50% weaker<br><br><br><span id="limUpReq1">Cost: 1</span>
+			</button><button class="upgrade" onclick="game.func.getLimUp(2)">
+				Time is twice as fast<br><br><br><span id="limUpReq2">Cost: 1</span>
+			</button><br>
+			</button><button class="occUpgrade"><br><br><br><br><br>
+			</button><button class="upgrade" onclick="game.func.getLimUp(3)">
+				Limits have their own effect<br><br><span id="limUpReq3">Cost: 3</span>
+			</button>
+		</div>
+		<script src="script.js"></script>
+	</body>
+</html>
