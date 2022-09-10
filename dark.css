@@ -1,0 +1,23 @@
+body {
+	background-color: black;
+	background-image: url('https://s3.wp.wsu.edu/uploads/sites/2797/2022/03/space.jpg');
+	background-size: cover
+}
+
+h2 {
+	color: white
+}
+
+button,span {
+	color: white;
+	font-size: 16px
+}
+
+button {
+	background-color: black;
+	border: solid white
+}
+
+.top {
+	background-color: black
+}

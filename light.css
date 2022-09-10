@@ -7,13 +7,17 @@ h2 {
 }
 
 button,span {
-	color: black;
 	font-size: 16px
 }
 
 button {
 	background-color: white;
 	border-color: black
+}
+
+.buttonHover:hover {
+	background-color: black;
+	color: white
 }
 
 .top {

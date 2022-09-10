@@ -1,5 +1,6 @@
 body {
-	font-family: sans-serif
+	font-family: sans-serif;
+	margin: 0px
 }
 			
 button,span {
@@ -19,9 +20,13 @@ h2 {
 	background-color: white;
 	border-width: 3px;
 	cursor: pointer;
-	font-size: 24px;
+	font-size: 26px;
 	margin-right: 4px;
-	transition-duration: 0.4s;
+	transition-duration: 0.2s
+}
+
+.utab {
+	margin: 8px;
 }
 			
 .upgrade {
@@ -33,4 +38,24 @@ h2 {
 	opacity: 0;
 	width: 120px;
 	height: 120px
+}
+
+.prestige {
+	width: 200px;
+	height: 60px
+}
+
+#cursor {
+	background-color: lime;
+	color: lime
+}
+
+#headerButton {
+	background-color: #DDD;
+	border: 6px solid #DDD;
+	cursor: default
+}
+
+#dilaterUpg {
+	border: 2px solid black;
 }
