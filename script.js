@@ -3,6 +3,8 @@
 	It is very unorganized
 */
 
+let body = document.body
+
 const ON = OmegaNum
 
 const id = function(id) {
@@ -14,8 +16,6 @@ const id = function(id) {
 	
 	return x
 }
-
-let body = document.body
 
 const game = {
 	save: {},
@@ -190,6 +190,10 @@ const explort = function() {
 	return "ey" + btoa(JSON.stringify(game.save).split('').reverse().join(''))
 }
 
+game.tmp = {
+	limUpCosts: [ON(1), ON(1), ON(1), ON(3), ON(2), ON(2), ON(2)]
+}
+
 game.func = {	
 	reset(id) {
 		game.save.point = ON(0)
@@ -221,9 +225,8 @@ game.func = {
 		}
 	},
 	getLimUp(id) {
-		let a = [ON(1), ON(1), ON(1), ON(2), ON(2), ON(3)]
-		if (game.save.limit.gte(a[id]) && !game.save.limUp[id]) {
-			game.save.limit = game.save.limit.sub(a[id])
+		if (game.save.limit.gte(game.tmp.limUpCosts[id]) && !game.save.limUp[id]) {
+			game.save.limit = game.save.limit.sub(game.tmp.limUpCosts[id])
 			game.save.limUp[id] = true
 		}
 	}
@@ -231,7 +234,9 @@ game.func = {
 
 game.tick = {
 	freeDilater() {
-		return game.save.compress.add(game.tick.freeComp())
+		let d = game.save.compress.add(game.tick.freeComp())
+		if (game.save.limUp[0]) d = d.add(4)
+		return d
 	},
 	dilaterCost() {
 		let cost = ON.pow(2, game.save.dilater.sub(1).div(8))
@@ -240,12 +245,13 @@ game.tick = {
 	},
 	dilaterEff() {
 		let eff = game.save.dilater.add(game.tick.freeDilater()).sub(1).max(0)
+		if (game.save.limUp[5]) eff = eff.mul(2)
 		if (eff.gt(16)) eff = eff.sqrt().mul(4)
 		return eff
 	},
 	freeComp() {
 		let c = ON(0)
-		if (game.save.limUp[0]) c = c.add(1)
+		if (game.save.limUp[6]) c = c.add(1)
 		return c
 	},
 	compCost() {
@@ -254,16 +260,18 @@ game.tick = {
 	compEff() {
 		let eff = game.save.compress.add(game.tick.freeComp())
 		eff = eff.add(eff.gte(16) ? eff.sqrt().mul(4) : eff)
+		if (game.save.limUp[3]) eff = eff.mul(game.tick.limitEff())
 		return eff
 	},
 	limitEff() {
 		let eff = game.save.limit.add(1).sqrt()
-		if (eff.gt(4)) eff = eff.log2().mul(2)
-		return eff
+		if (eff.gt(4)) eff = eff.logBase(2).mul(2)
+		return eff.sqrt()
 	},
 	time() {
 		let time = game.tick.dilaterEff().mul(game.tick.limitEff()).div(game.tick.tuonEff()).div(256)
 		if (game.save.limUp[2]) time = time.mul(2)
+		if (game.save.limUp[4]) time = time.mul(2)
 		return time
 	},
 	timeCap() {
@@ -273,18 +281,17 @@ game.tick = {
 		return game.tick.time()
 	},
 	tuonEff() {
-		let eff = game.save.tuon.add(1).cbrt().mul(2).sub(1)
+		let eff = game.save.tuon.add(1).root(2.5)
 		if (game.save.limUp[1]) eff = eff.root(1.5)
 		return eff
 	},
 	tuonGain() {
-		return game.save.tuon.pow(0.8).add(1).mul(game.tick.time())
+		return game.save.tuon.pow(0.85).add(1).mul(game.tick.time())
 	}
 }
 
 const tick = function() {
 	let save = game.save
-	let tick = game.tick
 	let tmp = game.tmp
 	let other = game.other
 	
@@ -295,8 +302,8 @@ const tick = function() {
 	
 	// Updating variables
 	
-	for (item in tick) {
-		tmp[item] = tick[item]()
+	for (item in game.tick) {
+		tmp[item] = game.tick[item]()
 	}
 	
 	if (game.save.point.gte(5)) game.save.limitUnlock = true
@@ -334,11 +341,17 @@ const tick = function() {
 	id("timePassed").html(format.time(save.timePassed))
 	id("timePassedMax").html(save.timePassed.lt(tmp.timeCap) ? "":" (maxed out)")
 	id("fxProcap").html("Production is only " + format.total(tmp.timeCap) + " second" + (tmp.timeCap.eq(1) ? "":"s") + " long")
-	id("limitPrestigeText").html(game.save.point.lte(5) ? "Req: 5ε points" : "Reset for " + format.whole(game.func.getPrestige(2)) + " limit" + (game.func.getPrestige(2).eq(1) ? "":"s"))
-	id("limUpReq0").html(game.save.limUp[0] ? "Purchased":"Cost: 1")
-	id("limUpReq1").html(game.save.limUp[1] ? "Purchased":"Cost: 1")
-	id("limUpReq2").html(game.save.limUp[2] ? "Purchased":"Cost: 1")
-	id("limUpReq3").html(game.save.limUp[3] ? "Purchased":"Cost: 3")
+	id("limitTabButton").html(save.limitUnlock ? "Limit":"???")
+	id("limitPrestigeText").html(save.point.lte(5) ? "Req: 5ε points" : "Reset for " + format.whole(game.func.getPrestige(2)) + " limit" + (game.func.getPrestige(2).eq(1) ? "":"s"))
+	id("limitEff").html(!save.limUp[3] ? "":", multiplying the Compressor Effect by " + format.normal(tmp.limitEff))
+	
+	id("stab40").style.display = ""
+	id("stab41").style.display = "none"
+	
+	if (save.limitUnlock) {
+		id("stab40").style.display = "none"
+		id("stab41").style.display = ""
+	}
 	
 	cursor("dilaterUpg", game.save.point.gte(game.tmp.dilaterCost))
 	cursor("compressUpg", game.save.dilater.gte(game.tmp.compCost))
@@ -351,6 +364,10 @@ const tick = function() {
 		id("fxTime").html("Time is " + format.normal(ON(1).div(tmp.time)) + "x slower than real-time")
 	} else {
 		id("fxTime").html("Time is " + format.normal(tmp.time) + "x faster than real-time")
+	}
+	
+	for (let i = 0; i < 7; i++) {
+		id("limUpReq" + i).html(game.save.limUp[i] ? "Purchased":"Cost: " + format.whole(tmp.limUpCosts[i]))
 	}
 	
 	function tagHTML(x, y) {

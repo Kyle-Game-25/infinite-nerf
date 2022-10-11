@@ -16,7 +16,7 @@
 			<button onclick="tab(1)" class="top">Effects</button>
 			<button onclick="tab(2)" class="top">Options</button>
 			<button onclick="tab(3)" class="top">Help</button>
-			<button onclick="tab(4)" id="limitTabButton" class="top">Limit</button>
+			<button onclick="tab(4)" id="limitTabButton" class="top">???</button>
 		</div>
 		<div id="utab0" class="utab">
 			<big><big><big><b>You have <text class="_point_">0</text> points</b></big></big></big><br>
@@ -49,30 +49,41 @@
 				Compressors increase the duration of Production but at the cost of resetting Production and Dilaters<br>
 				Start off by getting a Dilater, then get a Compressor, then get another Dilater<br>
 				As you can see you will start to generate Points, but the unit is ε?<br>
-				ε is a quantity that means infinitely small or 1/∞ in the hyper-real numbers<br>
+				ε is a quantity that means infinitely small or infinitely close to zero<br>
 				The 10% of your Points are lost effect is negligeble as it is affected by Time Speed<br>
 				Another resource is also being generated: Tuons<br>
 				Tuons are the bane of your production as it divides Time Speed and boosts its own gain<br>
 				Just do a Dilater reset then Compressor reset if you can until you unlock the next layer
 			</span><br><br>
-			<b><big>Limits</big></b><br>
+			<b><big>???</big></b><br>
 			<span>
-				This is still being worked on
+				Yeah it is here, but this is not yet finished
 			</span>
 		</div><div id="utab4" class="utab">
-			<big><big><big><b>You have <text class="_limit_">0</text> limits</big></big></big></b><br>
-			<button class="prestige" id="limitPrestige" onclick="game.func.prestige(2)"><big><big id="limitPrestigeText"></big></big></button><br><br>
-			<button class="upgrade" onclick="game.func.getLimUp(0)">
-				Gain a free Compressor<br><br><br><span id="limUpReq0">Cost: 1</span>
-			</button><button class="upgrade" onclick="game.func.getLimUp(1)">
-				Tuon effect is 50% weaker<br><br><br><span id="limUpReq1">Cost: 1</span>
-			</button><button class="upgrade" onclick="game.func.getLimUp(2)">
-				Time is twice as fast<br><br><br><span id="limUpReq2">Cost: 1</span>
-			</button><br>
-			</button><button class="occUpgrade"><br><br><br><br><br>
-			</button><button class="upgrade" onclick="game.func.getLimUp(3)">
-				Limits have their own effect<br><br><span id="limUpReq3">Cost: 3</span>
-			</button>
+			<div id="stab40">
+				<big><big><big><b>Reach 5ε points to unlock this feature</b></big></big></big>
+			</div><div id="stab41">
+				<big><big><big><b>You have <text class="_limit_">0</text> limits<text id="limitEff"></text></big></big></big></b><br>
+				<button class="prestige" id="limitPrestige" onclick="game.func.prestige(2)"><big><big id="limitPrestigeText"></big></big></button><br><br>
+				<button class="upgrade" onclick="game.func.getLimUp(0)">
+					Gain 4 Free Dilaters<br><br><br><span id="limUpReq0">Cost: 1</span>
+				</button><button class="upgrade" onclick="game.func.getLimUp(1)">
+					Tuon Effect is 50% weaker<br><br><br><span id="limUpReq1">Cost: 1</span>
+				</button><button class="upgrade" onclick="game.func.getLimUp(2)">
+					Time is twice as fast<br><br><br><span id="limUpReq2">Cost: 1</span>
+				</button><br>
+				<button class="occUpgrade"><br><br><br><br><br>
+				</button><button class="upgrade" onclick="game.func.getLimUp(3)">
+					Limits have their own effect<br><br><span id="limUpReq3">Cost: 3</span>
+				</button><br>
+				<button class="upgrade" onclick="game.func.getLimUp(4)">
+					Time is twice as fast<br><br><br><span id="limUpReq4">Cost: 2</span>
+				</button><button class="upgrade" onclick="game.func.getLimUp(5)">
+					Dilater Effect is multiplied by 2<br><br><br><span id="limUpReq5">Cost: 2</span>
+				</button><button class="upgrade" onclick="game.func.getLimUp(6)">
+					Gain 1 Free Compressor<br><br><br><span id="limUpReq6">Cost: 2</span>
+				</button>
+			</div>
 		</div>
 	</body>
 </html>
