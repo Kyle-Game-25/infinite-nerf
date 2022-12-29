@@ -7,41 +7,79 @@
 		<script defer src="script.js"></script>
 	</head>
 	<body>
-		<div id="styleMode"><link rel="stylesheet" type="text/css" href="light.css"/></div>
-		<div id="loadScreen" style="text-align:center">
+		<link id="styleMode" rel="stylesheet" type="text/css" href="light.css"/></div>
+		<div id="loadScreen">
 			<big><h1>Loading...</h1></big>
-		</div>
-		<div id="headerButton" style="display:none">
-			<button onclick="tab(0)" class="top">Main</button>
-			<button onclick="tab(1)" class="top">Effects</button>
-			<button onclick="tab(2)" class="top">Options</button>
+		</div><div id="importScreen" style="display:none">
+			<button class="buttonHover" onclick="game.other.importScreen.display = false">X</button><br>
+			<span>Importing a save file will reset the previous save file</span><br>
+			<input id="importText" placeholder="Import Valid Save File here" ></input>
+			<button class="buttonHover" onclick="implort(document.getElementById('importText').value)">Import!</button>
+		</div><div id="resetScreen" style="display:none">
+			<button class="buttonHover" onclick="game.other.resetScreen.display = false">X</button><br>
+			<span>Are you sure you want to reset this save with <u>no boost</u></span><br>
+			<button class="buttonHover" onclick="game.other.resetScreen.display = false" style="font-size: 6rem">No</button>
+			<button class="buttonHover" onclick="game.other.resetScreen.display = false; reset()">Yes</button>
+		</div><div id="headerButton" style="display:none">
+			<button onclick="tab(0)" class="top">Effects</button>
+			<button onclick="tab(1)" class="top">Options</button>
+			<button onclick="tab(2)" class="top">Statistics</button>
 			<button onclick="tab(3)" class="top">Help</button>
-			<button onclick="tab(4)" id="limitTabButton" class="top">???</button>
-		</div>
-		<div id="utab0" class="utab">
-			<big><big><big><b>You have <text class="_point_">0</text> points</b></big></big></big><br>
-			<b>You are gaining <text class="_pointGain_">0</text> points per real-life second</b><br><br><br>
-			<big><big><big><b>You have <text class="_tuon_">0</text> tuons dividing Time Speed by <text class="_tuonEffect_">1.00</text></b></big></big></big><br>
-			<b>You are gaining <text class="_tuonGain_">0</text> tuons per real-life second</b><br><br><br><br>
-			<b>You have <text class="_dilater_">0 dilaters</text> multiplying Time Speed by <text class="_dilaterEffect_">0</text></b><br>
-			<b>You have <text class="_compress_">0 compressors</text> increasing the Production Cap by <text class="_compressEffect_">1</text></b><br><br>
-			<button id="dilaterUpg" onclick="game.func.prestige(0)">Reset Progress to get a Dilater<br><br><span id="dilaterCost"></span></button>
-			<button id="compressUpg" onclick="game.func.prestige(1)">Reset Previous Progress to get a Compressor<br><br><span id="compCost"></span></button><br><br><br><br>
-			<big><big><b><text id="timePassed">0</text> of gametime have passed <text id="timePassedMax"></text></b></big></big>
-		</div><div id="utab1" class="utab">
+			<button onclick="tab(4)" class="top">Points</button>
+			<button onclick="tab(5)" id="limitTabButton" class="top">???</button>
+		</div><div id="utab_0" class="utab">
 			<span>Your Base Point Gain is 1</span><br>
-			<span>Point Prodution is divided by <b>∞</b></span><br>
+			<span id="fxTime">Time is 1,024x slower than real-time</span><br>
+			<span>Point Production is square rooted when greater than 1</span><br>
+			<span>Point Production is divided by <span class="update infinity_symbol">∞</span></span><br>
 			<span id="fxPointMult">Point Production is then multiplied by 1</span><br>
-			<span id="fxProcap">You can only produce 0 seconds of production</span><br>
-			<span id="fxTime">Time is 16.00x slower than real-time</span><br>
+			<span id="fxProdCap">You can only produce 0 seconds of production</span><br>
 			<span>You lose 10% of Points every second (affected by Time Speed)</span><br>
-			<span>Dilater Effect is weaker when greater than 16</span>
-		</div><div id="utab2" class="utab">
-			<div id="stab0">
-				<button onclick="implort(explort())"><big>Save</big></button>
-				<button onclick="reset()"><big>Reset</big></button>
+			<span>Dilater Effect is square rooted when greater than 16</span>
+		</div><div id="utab_1" class="utab">
+			<div>
+				<button onclick="tab(1, 0)" class="sub">Saving</button>
+				<button onclick="tab(1, 1)" class="sub">Themes</button>
+				<button onclick="tab(1, 2)" class="sub">Notation</button>
+				<button onclick="tab(1, 3)" class="sub">Messages</button>
+			</div><div id="stab_1-0">
+				<br>
+				<button onclick="implort(explort())" class="buttonHover">Save</button>
+				<button onclick="game.other.resetScreen.display = !game.other.resetScreen.display" class="buttonHover">Reset</button>
+				<br>
+				<button onclick="exportToFile()" class="buttonHover">Export to File</button>
+				<br>
+				<button onclick="game.other.importScreen.display = !game.other.importScreen.display" class="buttonHover">Import</button>
+			</div><div id="stab_1-1">
+				<br>
+				<button onclick="game.func.activateTheme('light')" style="cursor:pointer"></button><br>
+				<button onclick="game.func.activateTheme('dark')" style="cursor:pointer"></button>
+			</div><div id="stab_1-2">
+				<br>
+				<button id="toggleInfinitySymbol" onclick="game.func.toggleInfinitySymbol()">Infinity Symbol: ON</button>
+			</div><div id="stab_1-3">
+				<br>
+				<span id="randomMsg"></span>
 			</div>
-		</div><div id="utab3" class="utab">
+		</div><div id="utab_2" class="utab">
+			<span class="big">
+				You have <text class="update point big">0</text> points
+			</span><br>
+			<span class="big" id="statPointEquivalent"></span>
+			<br><br><br><br>
+			<span class="big">You have played for <text id="statTimePlayed" class="big">0 seconds</text></span>
+			<br><br><br><br><br><br>
+			<big><b>Infinite Nerf - v0.1</b></big>
+		</div><div id="utab_3" class="utab">
+			<b><big>Saving</big></b><br>
+			<span>
+				You start your game off with a save file<br>
+				This save file stores all your progress, data or everything you've done in the game<br>
+				Exporting your save file will give you a really large string<br>
+				This string contains the data of the save file, make sure to keep this safe<br>
+				Importing a save file is putting that string as your save file<br>
+				Resetting the game will, of course, reset all your progress, with <u>no boost</u>
+			</span><br><br>
 			<b><big>Early Game</big></b><br>
 			<span>
 				You are now in the game and you can see two buttons: Dilaters and Compressors<br>
@@ -53,33 +91,84 @@
 				The 10% of your Points are lost effect is negligeble as it is affected by Time Speed<br>
 				Another resource is also being generated: Tuons<br>
 				Tuons are the bane of your production as it divides Time Speed and boosts its own gain<br>
-				Just do a Dilater reset then Compressor reset if you can until you unlock the next layer
+				Just do a Dilater reset then Compressor reset if you can, until you unlock the next layer
 			</span><br><br>
 			<b><big>???</big></b><br>
 			<span>
 				Yeah it is here, but this is not yet finished
 			</span>
-		</div><div id="utab4" class="utab">
-			<div id="stab40">
-				<big><big><big><b>Reach 5ε points to unlock this feature</b></big></big></big>
-			</div><div id="stab41">
-				<big><big><big><b>You have <text class="_limit_">0</text> limits<text id="limitEff"></text></big></big></big></b><br>
+		</div><div id="utab_4" class="utab">
+			<span class="big">
+				You have <text class="update point big">0</text> points
+			</span>
+			<br>
+			<b>
+				You are gaining <text class="update pointGain">0</text> points per real-life second
+			</b>
+			<br><br><br>
+			<span class="big">
+				You have <text class="update tuon big">0</text> tuons dividing Time Speed by <text class="update tuonEffect big">1.00</text>
+			</span>
+			<br>
+			<b>
+				You are gaining <text class="update tuonGain">0</text> tuons per real-life second
+			</b>
+			<br><br><br><br>
+			<b>
+				You have <text class="update dilater">0 dilaters</text>
+			</b>
+			<ul class="ulCustom">
+				<li>
+					Multiplying Time Speed by <text class="update dilaterEffect">0</text>
+				</li>
+			</ul>
+			<br>
+			<button id="dilaterUpg" onclick="game.func.prestige(0)">
+				<text>Reset Progress<br>and gain a Dilater</text><br><br>
+				<span id="dilaterCost"></span>
+			</button>
+			<br><br><br><br>
+			<b>
+				You have <text class="update compress">0 compressors</text>
+			</b>
+			<ul class="ulCustom">
+				<li>
+					Increasing the Production Cap by <text class="update compressEffect1">0 seconds</text>
+				</li>
+				<li>
+					Multiplying the Dilater Effect by <text class="update compressEffect2">0</text>
+				</li>
+			</ul>
+			<br>
+			<button id="compressUpg" onclick="game.func.prestige(1)">
+				<text>Reset Previous Progress<br>and gain a Compressor</text><br><br>
+				<span id="compCost"></span>
+			</button>
+			<br><br><br><br>
+			<span class="big">
+				<text class="big" id="timePassed">0 milliseconds</text> of gametime have passed this reset<text class="big" id="timePassedMax"></text>
+			</span>
+		</div><div id="utab_5" class="utab">
+			<div id="stab_5-0">
+				<span class="big">Reach 5ε points to unlock this feature</span>
+			</div><div id="stab_5-1">
+				<big><big><big><b>You have <text class="update limit">0</text> limits<text id="limitEff"></text></big></big></big></b><br>
 				<button class="prestige" id="limitPrestige" onclick="game.func.prestige(2)"><big><big id="limitPrestigeText"></big></big></button><br><br>
 				<button class="upgrade" onclick="game.func.getLimUp(0)">
-					Gain 4 Free Dilaters<br><br><br><span id="limUpReq0">Cost: 1</span>
+					Gain 16 Free Dilaters<br><br><br><span id="limUpReq0">Cost: 1</span>
 				</button><button class="upgrade" onclick="game.func.getLimUp(1)">
 					Tuon Effect is 50% weaker<br><br><br><span id="limUpReq1">Cost: 1</span>
 				</button><button class="upgrade" onclick="game.func.getLimUp(2)">
-					Time is twice as fast<br><br><br><span id="limUpReq2">Cost: 1</span>
+					Dilater Effect is doubled<br><br><br><span id="limUpReq2">Cost: 1</span>
 				</button><br>
 				<button class="occUpgrade"><br><br><br><br><br>
 				</button><button class="upgrade" onclick="game.func.getLimUp(3)">
 					Limits have their own effect<br><br><span id="limUpReq3">Cost: 3</span>
 				</button><br>
 				<button class="upgrade" onclick="game.func.getLimUp(4)">
-					Time is twice as fast<br><br><br><span id="limUpReq4">Cost: 2</span>
+					Dilater Effect is doubled<br><br><br><span id="limUpReq4">Cost: 2</span>
 				</button><button class="upgrade" onclick="game.func.getLimUp(5)">
-					Dilater Effect is multiplied by 2<br><br><br><span id="limUpReq5">Cost: 2</span>
+					Compressor Effect is increased by 10%<br><span id="limUpReq5">Cost: 2</span>
 				</button><button class="upgrade" onclick="game.func.getLimUp(6)">
 					Gain 1 Free Compressor<br><br><br><span id="limUpReq6">Cost: 2</span>
 				</button>

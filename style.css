@@ -1,43 +1,86 @@
+* {
+	font-family: sans-serif
+}
+
+html {
+	font-size: 10px;
+	height: 100%
+}
+
 body {
-	font-family: sans-serif;
-	margin: 0px
+	margin: 0px;
+	background-color: var(--color_1);
+	height: 100%
 }
-			
+
 button,span {
-	font-size: 16px
+	font-size: 1.4rem
 }
-			
+
 button {
-	border: 2px solid black;
-	background-color: white
+	background-color: var(--color_1);
+	border: 2px solid var(--color_2);
+	color: var(--color_2)
+}
+
+button:hover, .buttonHover:hover {
+	background-color: var(--color_2);
+	color: var(--color_1)
 }
 
 h2 {
 	margin: 0px
 }
 
-.top {
-	background-color: white;
-	border-width: 3px;
+h2, span, text, b, li {
+	color: var(--color_2);
+	font-size: 1.6rem
+}
+
+.big {
+	font-size: 2.4rem;
+	font-weight: bold
+}
+
+.buttonHover {
+	cursor: pointer
+}
+
+.ulCustom {
+	padding-left: 3rem;
+	margin-top: 0px
+}
+
+.top, .sub {
 	cursor: pointer;
-	font-size: 26px;
-	margin-right: 4px;
-	transition-duration: 0.2s
+	margin-right: 4px
+}
+
+.top {
+	border-width: 3px;
+	font-size: 2.4rem
+}
+
+.sub {
+	border-width: 2px;
+	font-size: 1.8rem
 }
 
 .utab {
-	margin: 8px;
-}
-			
-.upgrade {
-	width: 120px;
-	height: 120px
+	margin: 8px
 }
 
 .occUpgrade {
-	opacity: 0;
+	opacity: 0
+}
+
+.upgrade, .occUpgrade {
+	background-color: var(--color_1);
+	border: 2px solid var(--color_2);
+	color: var(--color_2);
 	width: 120px;
-	height: 120px
+	height: 120px;
+	font-size: 1.6em
 }
 
 .prestige {
@@ -45,17 +88,48 @@ h2 {
 	height: 60px
 }
 
-#cursor {
-	background-color: lime;
-	color: lime
+#loadScreen {
+	text-align: center;
+	position: absolute
+}
+
+#importScreen, #resetScreen {
+	background-color: var(--color_1);
+	border: 2px solid var(--color_2);
+	height: 15em;
+	position: absolute;
+	width: 25em
+}
+
+#importText {
+	border: 2px solid var(--color_2)
 }
 
 #headerButton {
-	background-color: #DDD;
-	border: 6px solid #DDD;
-	cursor: default
+	border: 6px solid;
+	cursor: default;
+	background-color: var(--color_3);
+	border-color: var(--color_3)
 }
 
-#dilaterUpg {
-	border: 2px solid black;
+#dilaterUpg, #compressUpg {
+	border: 2px solid var(--color_2);
+	background-color: var(--color_1)
+}
+
+#dilaterUpg, #compressUpg, #dilaterUpg span, #compressUpg span {
+	color: var(--color_2)
+}
+
+#dilaterUpg.buttonHover:hover, #compressUpg.buttonHover:hover {
+	background-color: var(--color_2);
+	color: var(--color_1)
+}
+
+#dilaterUpg.buttonHover:hover span, #compressUpg.buttonHover:hover span, #dilaterUpg.buttonHover:hover text, #compressUpg.buttonHover:hover text {
+	color: var(--color_1)
+}
+
+#toggleInfinitySymbol {
+	cursor: pointer
 }
