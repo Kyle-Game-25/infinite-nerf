@@ -31,11 +31,12 @@
 			<span>Your Base Point Gain is 1</span><br>
 			<span id="fxTime">Time is 1,024x slower than real-time</span><br>
 			<span>Point Production is square rooted when greater than 1</span><br>
-			<span>Point Production is divided by <span class="update infinity_symbol">∞</span></span><br>
+			<span>Point Production is divided by <span class="update infinity_text">∞</span></span><br>
 			<span id="fxPointMult">Point Production is then multiplied by 1</span><br>
 			<span id="fxProdCap">You can only produce 0 seconds of production</span><br>
 			<span>You lose 10% of Points every second (affected by Time Speed)</span><br>
-			<span>Dilater Effect is square rooted when greater than 16</span>
+			<span>Dilater Effect is square rooted when greater than 16</span><br>
+			<button onclick="aprilFooled = true; this.style.display = 'none'; if (game.save.compress.gt(0)) setTimeout(function(){document.body.innerHTML = '<h1>April Fools!</h1><br>Just reload the page to get back to normal'}, 10000)">???</button>
 		</div><div id="utab_1" class="utab">
 			<div>
 				<button onclick="tab(1, 0)" class="sub">Saving</button>
@@ -44,10 +45,11 @@
 				<button onclick="tab(1, 3)" class="sub">Messages</button>
 			</div><div id="stab_1-0">
 				<br>
-				<button onclick="implort(explort())" class="buttonHover">Save</button>
+				<button onclick="saveGame()" class="buttonHover">Save</button>
 				<button onclick="game.other.resetScreen.display = !game.other.resetScreen.display" class="buttonHover">Reset</button>
 				<br>
 				<button onclick="exportToFile()" class="buttonHover">Export to File</button>
+				<button onclick="exportToClipboard()" class="buttonHover">Export to Clipboard</button>
 				<br>
 				<button onclick="game.other.importScreen.display = !game.other.importScreen.display" class="buttonHover">Import</button>
 			</div><div id="stab_1-1">
@@ -56,7 +58,8 @@
 				<button onclick="game.func.activateTheme('dark')" style="cursor:pointer"></button>
 			</div><div id="stab_1-2">
 				<br>
-				<button id="toggleInfinitySymbol" onclick="game.func.toggleInfinitySymbol()">Infinity Symbol: ON</button>
+				<button id="toggleInfinitySymbol" onclick="game.func.toggleInfinitySymbol()">Infinity Symbol: ON</button><br>
+				<button id="switchDigitSeperator" onclick="game.func.switchDigitSeperator()">Digit Seperator: Commas</button>
 			</div><div id="stab_1-3">
 				<br>
 				<span id="randomMsg"></span>
@@ -69,7 +72,7 @@
 			<br><br><br><br>
 			<span class="big">You have played for <text id="statTimePlayed" class="big">0 seconds</text></span>
 			<br><br><br><br><br><br>
-			<big><b>Infinite Nerf - v0.1</b></big>
+			<big><b>Infinite Nerf - v0.1.1</b></big>
 		</div><div id="utab_3" class="utab">
 			<b><big>Saving</big></b><br>
 			<span>
@@ -149,28 +152,39 @@
 				<text class="big" id="timePassed">0 milliseconds</text> of gametime have passed this reset<text class="big" id="timePassedMax"></text>
 			</span>
 		</div><div id="utab_5" class="utab">
-			<div id="stab_5-0">
+			<div id="stab_5-locked">
 				<span class="big">Reach 5ε points to unlock this feature</span>
-			</div><div id="stab_5-1">
-				<big><big><big><b>You have <text class="update limit">0</text> limits<text id="limitEff"></text></big></big></big></b><br>
-				<button class="prestige" id="limitPrestige" onclick="game.func.prestige(2)"><big><big id="limitPrestigeText"></big></big></button><br><br>
-				<button class="upgrade" onclick="game.func.getLimUp(0)">
-					Gain 16 Free Dilaters<br><br><br><span id="limUpReq0">Cost: 1</span>
-				</button><button class="upgrade" onclick="game.func.getLimUp(1)">
+			</div><div id="stab_5-0">
+				<span class="big">
+					You have <text class="update limit big">0 limits</text> <text id="limitEff" class="big"></text>
+				</span>
+				<br>
+				<button class="prestige" id="limitPrestige" onclick="game.func.prestige(2)">
+					<big><big id="limitPrestigeText"></big></big>
+				</button>
+				<br><br>
+				<button class="upgrade limit" onclick="game.func.getLimUp(0)">
+					Gain 4 Free Dilaters<br><br><br><span id="limUpReq0">Cost: 1</span>
+				</button><button class="upgrade limit" onclick="game.func.getLimUp(1)">
 					Tuon Effect is 50% weaker<br><br><br><span id="limUpReq1">Cost: 1</span>
-				</button><button class="upgrade" onclick="game.func.getLimUp(2)">
+				</button><button class="upgrade limit" onclick="game.func.getLimUp(2)">
 					Dilater Effect is doubled<br><br><br><span id="limUpReq2">Cost: 1</span>
-				</button><br>
-				<button class="occUpgrade"><br><br><br><br><br>
-				</button><button class="upgrade" onclick="game.func.getLimUp(3)">
-					Limits have their own effect<br><br><span id="limUpReq3">Cost: 3</span>
-				</button><br>
-				<button class="upgrade" onclick="game.func.getLimUp(4)">
-					Dilater Effect is doubled<br><br><br><span id="limUpReq4">Cost: 2</span>
-				</button><button class="upgrade" onclick="game.func.getLimUp(5)">
-					Compressor Effect is increased by 10%<br><span id="limUpReq5">Cost: 2</span>
-				</button><button class="upgrade" onclick="game.func.getLimUp(6)">
-					Gain 1 Free Compressor<br><br><br><span id="limUpReq6">Cost: 2</span>
+				</button>
+				<br>
+				<button class="upgrade limit" onclick="game.func.getLimUp(3)">
+					<br>Gain 1 Free Compressor<br><br><span id="limUpReq3">Cost: 2</span><br><span class="noOpacity">?</span>
+				</button><button class="upgrade limit" onclick="game.func.getLimUp(4)">
+					First Compressor Effect is 1.1x more effective<br><br><span id="limUpReq4">Cost: 2</span>
+				</button><button class="upgrade limit" onclick="game.func.getLimUp(5)">
+					<br>Dilater Effect is doubled<br><br><span id="limUpReq5">Cost: 2</span><br><span class="noOpacity">?</span>
+				</button>
+				<br>
+				<button class="upgrade limit" onclick="game.func.getLimUp(6)">
+					Gain a Free Dilater every Compressor<br><br><span id="limUpReq6">Cost: 3</span>
+				</button><button class="upgrade limit" onclick="game.func.getLimUp(7)">
+					Second Compressor Effect is better<br><br><span id="limUpReq7">Cost: 5</span>
+				</button><button class="upgrade limit" onclick="game.func.getLimUp(8)">
+					Limits have their own effect<br><br><span id="limUpReq8">Cost: 10</span>
 				</button>
 			</div>
 		</div>

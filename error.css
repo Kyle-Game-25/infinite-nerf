@@ -1,0 +1,8 @@
+:root {
+	--color_1: red;
+	--color_2: white
+}
+
+* {
+	font-family: consolas
+}

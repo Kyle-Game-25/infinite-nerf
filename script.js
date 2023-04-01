@@ -1,23 +1,39 @@
+"use strict"
+
+let aprilFooled = false
+
 const ON = OmegaNum
 
 const id = function(id) {
-	let x = document.getElementById(id)
+	let elm = document.getElementById(id)
 	
-	x.html = function(html) {
-		x.innerHTML = html
-	}
+	elm.__defineGetter__("html", function(){return elm.innerHTML})
 	
-	x.display = function(display) {
-		x.style.display = display ? "":"none"
-	}
+	elm.__defineSetter__("html", function(html) {
+		if (typeof html == "function") {
+			elm.innerHTML = html()
+		} else if (Array.isArray(html)) {
+			elm.innerHTML = html.join('')
+		} else {
+			elm.innerHTML = html
+		}
+	})
 	
-	return x
+	elm.__defineGetter__("display", function(){
+		if (elm.style.display == "none") return false
+		return true
+	})
+	
+	elm.__defineSetter__("display", function(display) {
+		elm.style.display = display ? "":"none"
+	})
+	
+	return elm
 }
 
 const game = {
 	save: {},
 	tick: {},
-	tmp: {},
 	func: {},
 	start: {
 		point: ON(0),
@@ -27,12 +43,13 @@ const game = {
 		timePassed: ON(0),
 		limit: ON(0),
 		limitUnlock: false,
-		limUp: [false, false, false, false],
+		limUp: [false, false, false, false, false, false, false, false, false],
 		lastTick: Date.now(),
 		diff: 0,
 		timePlayed: 0,
 		options: {
 			infinitySymbol: true,
+			digitSeperator: 0,
 			theme: "light"
 		}
 	},
@@ -47,20 +64,9 @@ const game = {
 			"NO! INFLATION IS EATING ME ALIVE! I was used to the slowness",
 			"Having one point is an accomplishment in this game",
 			"Dilation? More like... uh... I don't have a funny joke",
-			"Compressors compress time, so wouldn't it make the Production Cap smaller?"
+			"Compressors compress time, so wouldn't it make the Production Cap smaller?",
+			"This game does not use cookies to store information."
 		],
-		importScreen: {
-			display: false,
-			mousedown: false,
-			x: 0,
-			y: 0,
-		},
-		resetScreen: {
-			display: false,
-			mousedown: false,
-			x: 0,
-			y: 0,
-		}
 	}
 }
 
@@ -75,7 +81,13 @@ const format = {
 	normal(number) {
 		let x = ON(number)
 		
-		if (x.eq(0)) {
+		if (x.isNegative()) {
+			return "-" + format.normal(x.abs())
+		} else if (x.isNaN()) {
+			return "NaN"
+		} else if (x.isInfinite()) {
+			return "Infinity"
+		} else if (x.eq(0)) {
 			return "0"
 		} else if (x.lt(1e6) && x.gt(0.00001)) {
 			if (x.lt(1)) {
@@ -86,8 +98,9 @@ const format = {
 			} else if (x.lt(1e3)) {
 				return x.floor() + "." + x.mul(10).floor().mod(10) + x.mul(100).floor().mod(10)
 			} else {
+				let digitSeperator = [",", "'", "_"][game.save.options.digitSeperator]
 				let y = x.mod(1e3).floor().toString()
-				return x.div(1e3).floor() + "," + "0".repeat(3-y.length) + y
+				return x.div(1e3).floor() + digitSeperator + "0".repeat(3-y.length) + y
 			}
 		} else {
 			let y = ON(10).pow(x.log10().floor())
@@ -97,34 +110,55 @@ const format = {
 	
 	whole(number) {
 		let x = ON(number)
+		if (x.isNegative()) return "-" + format.whole(x.abs())
+		if (x.isNaN()) return "NaN"
+		if (x.isInfinite()) return "Infinity"
 		if (x.eq(0)) return "0"
 		if (x.lt(1e3)) return String(x.floor())
 		return format.normal(x)
 	},
 	
 	time(second) {
-		return time(ON(second), 2)	
-			
+		return time(ON(second), 3)
+		
 		function time(x, y) {
 			let z = ''
 			
-			if (x.lte(0)) return ''
-			else if (x.lt(1) && y < 2) z = " and "
-			else if (y < 2) z = ", "
+			if (y < 3) {
+				z = ", "
+				if (x.lte(0)) return ''
+			}
 			
 			if (y > 0) {
-				if (x.lt(1)) z += format.normal(x.mul(1000)) + " milliseconds"
-				else if (x.lt(60)) z += format.whole(x) + " second" + (x.floor().eq(1) ? "":"s") + time(x.sub(x.floor()), y-1)
-				else if (x.lt(3600)) z += format.whole(x.div(60)) + " minute" + (x.div(60).floor().eq(1) ? "":"s") + time(x.sub(x.div(60).floor().mul(60)), y-1)
-				else if (x.lt(86400)) z += format.whole(x.div(3600)) + " hour" + (x.div(3600).floor().eq(1) ? "":"s") + time(x.sub(x.div(3600).floor().mul(3600), y-1))
-				else z += format.whole(x.div(86400)) + " day" + (x.div(86400).floor().eq(1) ? "":"s") + time(x.sub(x.div(86400).floor().mul(86400), y-1))
+				if (x.lt(1)) {
+					if (y < 3) z = " and "
+					z += format.normal(x.mul(1000)) + " milliseconds"
+				} else if (x.lt(60)) {
+					if (x.sub(x.floor()).lte(0) && y < 3) z = " and "
+					z += format.whole(x) + " second" + isSingularAt(1) + time(x.sub(x.floor()), y-1)
+				} else if (x.lt(3600)) {
+					if (x.sub(x.div(60).floor().mul(60)).lte(0) && y < 3) z = " and "
+					z += format.whole(x.div(60)) + " minute" + isSingularAt(60) + time(x.sub(x.div(60).floor().mul(60)), y-1)
+				} else if (x.lt(86400)) {
+					if (x.sub(x.div(3600).floor().mul(3600)).lte(0) && y < 3) z = " and "
+					z += format.whole(x.div(3600)) + " hour" + isSingularAt(3600) + time(x.sub(x.div(3600).floor().mul(3600)), y-1)
+				} else {
+					if (x.sub(x.div(86400).floor().mul(86400)).lte(0) && y < 3) z = " and "
+					z += format.whole(x.div(86400)) + " day" + isSingularAt(86400) + time(x.sub(x.div(86400).floor().mul(86400)), y-1)
+				}
+				
 				return z
 			} else {
+				z = " and "
 				if (x.lt(1)) return z + format.normal(x.mul(1000)) + " milliseconds"
 				if (x.lt(60)) return z + format.normal(x) + " second" + (x.floor().eq(1) ? "":"s")
 				if (x.lt(3600)) return z + format.normal(x.div(60)) + " minute" + (x.div(60).floor().eq(1) ? "":"s")
 				if (x.lt(86400)) return z + format.normal(x.div(3600)) + " hour" + (x.div(3600).floor().eq(1) ? "":"s")
 				return z + format.normal(x.div(86400)) + " day" + (x.div(86400).floor().eq(1) ? "":"s")
+			}
+			
+			function isSingularAt(y) {
+				return x.div(y).floor().eq(1) ? "":"s"
 			}
 		}
 	},
@@ -141,28 +175,46 @@ const format = {
 	},
 	
 	totalTime(second) {
-		return time(ON(second), 2)	
+		return time(ON(second), 3)	
 		
 		function time(x, y) {
 			let z = ''
 			
-			if (x.lte(0)) return ''
-			else if (x.lt(1) && y < 2) z = " and "
-			else if (y < 2) z = ", "
+			if (y < 3) {
+				z = ", "
+				if (x.lte(0)) return ''
+			}
 			
 			if (y > 0) {
-				if (x.lt(1)) z += format.total(x.mul(1000)) + " milliseconds"
-				else if (x.lt(60)) z += format.whole(x) + " second" + (x.floor().eq(1) ? "":"s") + time(x.sub(x.floor()), y-1)
-				else if (x.lt(3600)) z += format.whole(x.div(60)) + " minute" + (x.div(60).floor().eq(1) ? "":"s") + time(x.sub(x.div(60).floor().mul(60)), y-1)
-				else if (x.lt(86400)) z += format.whole(x.div(3600)) + " hour" + (x.div(3600).floor().eq(1) ? "":"s") + time(x.sub(x.div(3600).floor().mul(3600), y-1))
-				else z += format.whole(x.div(86400)) + " day" + (x.div(86400).floor().eq(1) ? "":"s") + time(x.sub(x.div(86400).floor().mul(86400), y-1))
+				if (x.lt(1)) {
+					if (y < 3) z = " and "
+					z += format.total(x.mul(1000)) + " milliseconds"
+				} else if (x.lt(60)) {
+					if (x.sub(x.floor()).lte(0) && y < 3) z = " and "
+					z += format.total(x.floor()) + " second" + isSingularAt(1) + time(x.sub(x.floor()), y-1)
+				} else if (x.lt(3600)) {
+					if (x.sub(x.div(60).floor().mul(60)).lte(0) && y < 3) z = " and "
+					z += format.total(x.div(60).floor()) + " minute" + isSingularAt(60) + time(x.sub(x.div(60).floor().mul(60)), y-1)
+				} else if (x.lt(86400)) {
+					if (x.sub(x.div(3600).floor().mul(3600)).lte(0) && y < 3) z = " and "
+					z += format.total(x.div(3600).floor()) + " hour" + isSingularAt(3600) + time(x.sub(x.div(3600).floor().mul(3600)), y-1)
+				} else {
+					if (x.sub(x.div(86400).floor().mul(86400)).lte(0) && y < 3) z = " and "
+					z += format.total(x.div(86400).floor()) + " day" + isSingularAt(86400) + time(x.sub(x.div(86400).floor().mul(86400)), y-1)
+				}
+				
 				return z
 			} else {
+				z = " and "
 				if (x.lt(1)) return z + format.total(x.mul(1000)) + " milliseconds"
 				if (x.lt(60)) return z + format.total(x) + " second" + (x.floor().eq(1) ? "":"s")
 				if (x.lt(3600)) return z + format.total(x.div(60)) + " minute" + (x.div(60).floor().eq(1) ? "":"s")
 				if (x.lt(86400)) return z + format.total(x.div(3600)) + " hour" + (x.div(3600).floor().eq(1) ? "":"s")
 				return z + format.total(x.div(86400)) + " day" + (x.div(86400).floor().eq(1) ? "":"s")
+			}
+			
+			function isSingularAt(y) {
+				return x.div(y).floor().eq(1) ? "":"s"
 			}
 		}
 	},
@@ -178,8 +230,8 @@ const format = {
 
 const tab = function(up, sub) {
 	let amt = id("headerButton").children.length
-	for (let i = 0; i < amt; i++) id("utab_" + i).display(0)
-	id("utab_" + up).display(1)
+	for (let i = 0; i < amt; i++) id("utab_" + i).display = false
+	id("utab_" + up).display = true
 	update("random_message")
 	
 	if (!isNaN(sub)) {
@@ -187,11 +239,11 @@ const tab = function(up, sub) {
 		let a = 0
 		for (let i = 0; i < amt; i++) {
 			if (id("utab_" + up).children[i].id.includes("stab")) {
-				id("stab_" + up + "-" + a).display(0)
+				id("stab_" + up + "-" + a).display = false
 				a++
 			}
 		}
-		id("stab_" + up + "-" + sub).display(1)
+		id("stab_" + up + "-" + sub).display = true
 	}
 }
 
@@ -215,21 +267,19 @@ const implort = function(save) {
 	setObject(save, game.start)
 	
 	save.lastTick = Date.now()
+	
+	if (game.other.saveError) alert("Uh oh! There is an error with your save file. We will be trying to fix it")
+	game.other.saveError = false
 	game.save = save
 	
 	localStorage.setItem("infinite_nerf", explort())
 	
 	function setObject(x, s) {
-		for (item in s) {
+		for (let item in s) {
 			if (s[item] instanceof ON) {
 				x[item] = ON(x[item])
 				if (x[item].isNaN()) {
-					if (!game.other.saveError) {
-						alert("Uh oh! There is an error with your save file. We will be trying to fix it")
-						console.log(item)
-						game.other.saveError = true
-					}
-					
+					game.other.saveError = true
 					x[item] = ON(s[item])
 				}
 			} else if (x[item] == undefined) x[item] = s[item]
@@ -242,7 +292,7 @@ const explort = function() {
 	let x = {}
 	let s = game.start
 	
-	for (item in s) {
+	for (let item in s) {
 		if (s[item] instanceof ON) x[item] = game.save[item].toString()
 		else x[item] = game.save[item]
 	}
@@ -265,16 +315,19 @@ const exportToFile = function() {
 	}
 }
 
-game.tmp = {
-	limUpCosts: [ON(1), ON(1), ON(1), ON(3), ON(2), ON(2), ON(2)]
+const exportToClipboard = function() {
+	navigator.clipboard.writeText(explort())
 }
 
-game.func = {	
+const saveGame = function() {
+	implort(explort())
+}
+
+game.func = {
 	reset(id) {
 		game.save.point = ON(0)
 		game.save.tuon = ON(0)
 		game.save.timePassed = ON(0)
-		
 		if (id > 0) game.save.dilater = ON(0)
 		if (id > 1) game.save.compress = ON(0)
 	},
@@ -283,17 +336,24 @@ game.func = {
 	},
 	toggleInfinitySymbol() {
 		game.save.options.infinitySymbol = !game.save.options.infinitySymbol
-		id("toggleInfinitySymbol").html("Infinity Symbol: " + (game.save.options.infinitySymbol ? "ON" : "OFF"))
+		id("toggleInfinitySymbol").html = "Infinity Symbol: " + (game.save.options.infinitySymbol ? "ON" : "OFF")
+	},
+	switchDigitSeperator() {
+		let nameOfSeperator = ["Commas", "Quotes", "Underscore"]
+		game.save.options.digitSeperator++
+		game.save.options.digitSeperator %= 3
+		id("switchDigitSeperator").html = "Digit Seperator: " + nameOfSeperator[game.save.options.digitSeperator]
 	},
 	prestige(id) {
-		if (id == 0 && game.save.point.gte(game.tmp.dilaterCost)) {
+		if (id == 0 && game.save.point.gte(game.tick.dilaterCost)) {
 			game.func.reset(0)
 			game.save.dilater = game.save.dilater.add(1)
-		} else if (id == 1 && game.save.dilater.gte(game.tmp.compCost)) {
+		} else if (id == 1 && game.save.dilater.gte(game.tick.compCost)) {
 			game.func.reset(1)
 			game.save.compress = game.save.compress.add(1)
+			if (aprilFooled) setTimeout(function(){document.body.innerHTML = "<h1>April Fools!</h1><br>Just reload the page to get back to normal"}, 10000)
 		} else if (id == 2 && game.save.point.gte(5)) {
-			game.save.limit = game.save.limit.add(game.func.getPrestige(2))
+			game.save.limit = game.save.limit.add(game.func.getPrestigeGain(2))
 			game.func.reset(2)
 		}
 	},
@@ -302,7 +362,7 @@ game.func = {
 		
 		if (id == 2) {
 			let gain = game.save.point.sub(4)
-			if (gain.gt(5)) gain = gain.mul(5).add(1).sqrt()
+			if (gain.gt(5)) gain = gain.mul(5).sqrt()
 			return gain.floor()
 		}
 	},
@@ -313,8 +373,8 @@ game.func = {
 		} else if (id == 1) {
 			return game.save.compress.add(1).pow(2)
 		} else if (id == 2) {
-			let gain = getPrestigeGain(2)
-			if (gain.gt(5)) return gain.pow(2).sub(1).div(5)
+			let gain = game.func.getPrestigeGain(2)
+			if (gain.gte(5)) gain = gain.pow(2).div(5)
 			return gain.add(4)
 		}
 	},
@@ -323,78 +383,86 @@ game.func = {
 		if (id == 1) return
 		
 		if (id == 2) {
-			let gain = getPrestigeGain(2).add(1)
-			if (gain.gt(5)) return gain.pow(2).sub(1).div(5)
+			let gain = game.func.getPrestigeGain(2).add(1)
+			if (gain.gte(5)) gain = gain.pow(2).div(5)
 			return gain.add(4)
 		}
 	},
 	getLimUp(id) {
-		if (game.save.limit.gte(game.tmp.limUpCosts[id]) && !game.save.limUp[id]) {
-			game.save.limit = game.save.limit.sub(game.tmp.limUpCosts[id])
+		if (game.save.limit.gte(game.tick.limUpCosts[id]) && !game.save.limUp[id]) {
+			game.save.limit = game.save.limit.sub(game.tick.limUpCosts[id])
 			game.save.limUp[id] = true
 		}
 	}
 }
 
 game.tick = {
-	tuonEff() {
+	get tuonEff() {
 		let eff = game.save.tuon.add(1).sqrt()
 		if (game.save.limUp[1]) eff = eff.root(1.5)
 		return eff
 	},
-	tuonGain() {
-		return game.save.tuon.pow(0.85).add(1).mul(game.tmp.time)
+	get tuonGain() {
+		if (aprilFooled) return game.save.tuon.add(1).mul(2)
+		return game.save.tuon.pow(0.85).add(1).mul(game.tick.time)
 	},
-	freeDilater() {
+	get freeDilater() {
 		let free = ON(0)
-		if (game.save.limUp[0]) free = free.add(16)
+		if (game.save.limUp[0]) free = free.add(4)
+		if (game.save.limUp[6]) free = free.add(game.save.compressor)
 		return free
 	},
-	dilaterCost() {
+	get dilaterCost() {
 		return game.func.getPrestigeReq(0)
 	},
-	dilaterEff() {
-		let eff = game.save.dilater.add(game.tmp.freeDilater).mul(game.tmp.compEff2).max(0)
+	get dilaterEff() {
+		let eff = game.save.dilater.add(game.tick.freeDilater).mul(game.tick.compEff2).max(0)
 		if (game.save.limUp[2]) eff = eff.mul(2)
 		if (game.save.limUp[4]) eff = eff.mul(2)
 		if (eff.gt(16)) eff = eff.sqrt().mul(4)
 		return eff
 	},
-	freeComp() {
+	get freeComp() {
 		let free = ON(0)
-		if (game.save.limUp[6]) free = free.add(1)
+		if (game.save.limUp[3]) free = free.add(1)
 		return free
 	},
-	compCost() {
+	get compCost() {
 		return game.func.getPrestigeReq(1)
 	},
-	compEff1() {
-		let eff = game.save.compress.add(game.tmp.freeComp)
+	get compEff1() {
+		let eff = game.save.compress.add(game.tick.freeComp)
 		if (eff.gte(16)) eff = eff.add(eff.sqrt().mul(4))
 		else eff = eff.mul(2)
-		if (game.save.limUp[3]) eff = eff.mul(game.tmp.limitEff)
-		if (game.save.limUp[5]) eff = eff.mul(1.1)
+		if (game.save.limUp[4]) eff = eff.mul(1.1)
+		if (game.save.limUp[8]) eff = eff.mul(game.tick.limitEff)
 		return eff
 	},
-	compEff2() {
-		return game.save.compress.add(game.tmp.freeComp).sqrt()
+	get compEff2() {
+		let eff = game.save.compress.add(game.tick.freeComp).sqrt()
+		if (game.save.limUp[7]) eff = game.save.compress.add(game.tick.freeComp).root(1.5)
+		return eff
 	},
-	limitEff() {
+	get limitEff() {
 		let eff = game.save.limit.add(1).sqrt()
 		if (eff.gt(4)) eff = eff.logBase(2).mul(2)
 		return eff.sqrt()
 	},
-	time() {
-		let time = game.tmp.dilaterEff.mul(game.tmp.limitEff).div(game.tmp.tuonEff).div(1024)
+	get time() {
+		let time = game.tick.dilaterEff.mul(game.tick.limitEff).div(game.tick.tuonEff).div(1024)
 		return time
 	},
-	timeCap() {
-		return game.tmp.compEff1
+	get timeCap() {
+		return game.tick.compEff1
 	},
-	pointGain() {
-		let gain = game.tmp.time
+	get pointGain() {
+		let gain = game.tick.time
+		if (aprilFooled) gain = ON(0)
 		if (gain.gt(1)) gain = gain.sqrt()
 		return gain
+	},
+	get limUpCosts() {
+		return [ON(1), ON(1), ON(1), ON(2), ON(2), ON(2), ON(3), ON(5), ON(10)]
 	}
 }
 
@@ -415,21 +483,14 @@ const update = function(type) {
 	} else if (type == "random_message") {
 		let msg = game.other.randomMsg
 		let random = Math.floor(Math.random()*msg.length)
-		id("randomMsg").html(msg[random])
-	} else if (type == "tmp") {
-		updateTmp(5)
-		
-		function updateTmp(x) {
-			if (x < 1) return
-			for (item in game.tick) game.tmp[item] = game.tick[item]()
-			updateTmp(x-1)
-		}
+		id("randomMsg").html = msg[random]
 	}
 }
 
 const tick = function() {
+	let func = game.func
 	let save = game.save
-	let tmp = game.tmp
+	let tick = game.tick
 	let other = game.other
 	
 	save.diff += Date.now()-save.lastTick
@@ -441,7 +502,6 @@ const tick = function() {
 	
 	// Updating variables
 	
-	update("tmp")
 	if (game.save.point.gte(5)) game.save.limitUnlock = true
 	
 	other.importScreen.x = Math.max(Math.min(other.importScreen.x, document.body.clientWidth-id("importScreen").clientWidth-4), 0)
@@ -451,107 +511,166 @@ const tick = function() {
 	
 	// Production
 	
-	if (save.timePassed.lt(tmp.timeCap)) {
-		save.point = save.point.add(tmp.pointGain.mul(diff))
-		save.point = ON.pow(0.9,tmp.time.mul(diff)).mul(save.point)
-		save.tuon = save.tuon.add(tmp.tuonGain.mul(diff))
+	if (save.timePassed.lt(tick.timeCap)) {
+		save.point = save.point.add(tick.pointGain.mul(diff))
+		save.point = ON.pow(0.9, tick.time.mul(diff)).mul(save.point)
+		save.tuon = save.tuon.add(tick.tuonGain.mul(diff))
 	}
 	
 	save.timePlayed += diff.toNumber()
-	save.timePassed = save.timePassed.add(tmp.time.mul(diff))
+	save.timePassed = save.timePassed.add(tick.time.mul(diff))
 	
 	// Display part
-	tmp.pointGain = tmp.pointGain.sub(ON.pow(0.9,tmp.time).neg().add(1).mul(save.point.div(100)))
+	let pointGain = tick.pointGain.sub(ON.pow(0.9,tick.time).neg().add(1).mul(save.point.div(100)))
+	let style = id("styleMode")
 	
-	tagHTML("infinity_symbol", save.options.infinitySymbol ? "∞":"Infinity")
+	tagHTML("infinity_text", save.options.infinitySymbol ? "\u221e":"Infinity")
+	tagHTML("infinite_text", save.options.infinitySymbol ? "\u221e":"Infinite")
 	
 	tagHTML("point", format.infismall(save.point))
-	tagHTML("pointGain", format.infismall(tmp.pointGain))
+	tagHTML("pointGain", format.infismall(pointGain))
 	tagHTML("tuon", format.normal(save.tuon))
-	tagHTML("tuonEffect", format.normal(tmp.tuonEff))
-	tagHTML("tuonGain", format.normal(tmp.tuonGain))
-	tagHTML("dilater", format.total(save.dilater) + (tmp.freeDilater.gt(0) ? ("+" + format.total(tmp.freeDilater)):"") + " dilater" + (save.dilater.add(tmp.freeDilater).eq(1) ? "":"s"))
-	tagHTML("dilaterEffect", format.total(tmp.dilaterEff))
-	tagHTML("compress", save.compress + (tmp.freeComp.gt(0) ? ("+" + format.total(tmp.freeComp)):"") + " compressor" + (save.compress.eq(1) ? "":"s"))
-	tagHTML("compressEffect1", format.time(tmp.compEff1))
-	tagHTML("compressEffect2", format.total(tmp.compEff2))
-	tagHTML("limit", format.total(save.limit))
+	tagHTML("tuonEffect", format.normal(tick.tuonEff))
+	tagHTML("tuonGain", format.normal(tick.tuonGain))
+	tagHTML("dilater", format.total(save.dilater) + (tick.freeDilater.gt(0) ? ("+" + format.total(tick.freeDilater)):"") + " dilater" + grammarFrom(save.dilater.add(tick.freeDilater)))
+	tagHTML("dilaterEffect", format.total(tick.dilaterEff))
+	tagHTML("compress", save.compress + (tick.freeComp.gt(0) ? ("+" + format.total(tick.freeComp)):"") + " compressor" + grammarFrom(save.compress))
+	tagHTML("compressEffect1", format.time(tick.compEff1))
+	tagHTML("compressEffect2", format.total(tick.compEff2))
+	tagHTML("limit", format.total(save.limit) + " limit" + grammarFrom(save.limit))
 	
-	id("loadScreen").display(0)
-	id("headerButton").display(1)
-	if (other.loading) id("utab_0").display(1)
+	id("loadScreen").display = false
+	id("headerButton").display = true
+	if (other.loading) id("utab_0").display = true
 	
 	id("importScreen").style.transform = `translate(${other.importScreen.x}px, ${other.importScreen.y}px)`
-	id("importScreen").display(other.importScreen.display)
+	id("importScreen").display = other.importScreen.display
 	id("resetScreen").style.transform = `translate(${other.resetScreen.x}px, ${other.resetScreen.y}px)`
-	id("resetScreen").display(other.resetScreen.display)
+	id("resetScreen").display = other.resetScreen.display
 	
 	if (other.importScreen.mousedown) id("importScreen").style.cursor = "grabbing"
 	else id("importScreen").style.cursor = "grab"
+	
 	if (other.resetScreen.mousedown) id("resetScreen").style.cursor = "grabbing"
 	else id("resetScreen").style.cursor = "grab"
 	
-	id("statPointEquivalent").html("If every point were a liter of water, you would have enough to fill " + format.totalInf(save.point.mul(4)) + " cups")
-	id("statTimePlayed").html(format.totalTime(save.timePlayed))
-	
-	id("dilaterCost").html("Req: " + format.totalInf(tmp.dilaterCost) + " points")
-	id("compCost").html("Req: " + format.total(tmp.compCost) + " dilater" + (tmp.compCost.eq(1) ? "":"s"))
-	id("timePassed").html(format.time(save.timePassed))
-	id("timePassedMax").html(save.timePassed.lt(tmp.timeCap) ? "":" (maxed out)")
-	id("fxProdCap").html(`Production is only ${format.total(tmp.timeCap)} second` + (tmp.timeCap.eq(1) ? "":"s") + " long")
-	id("limitTabButton").html(save.limitUnlock ? "Limit":"???")
-	id("limitPrestigeText").html(save.point.lte(5) ? "Req: 5ε points" : `Reset for ${format.whole(game.func.getPrestige(2))} limit` + (game.func.getPrestige(2).eq(1) ? "":"s"))
-	id("limitEff").html("")
-	if (save.limUp[3]) id("limitEff").html(`, multiplying the Compressor Effect by ${format.normal(tmp.limitEff)}`)
-	
-	id("stab_5-0").display(!save.limitUnlock)
-	id("stab_5-1").display(save.limitUnlock)
-	
-	cursor(id("dilaterUpg"), game.save.point.gte(game.tmp.dilaterCost))
-	cursor(id("compressUpg"), game.save.dilater.gte(game.tmp.compCost))
-	cursor(id("limitPrestige"), game.save.point.gte(5))
-	
-	if (tmp.time.lte(0)) id("fxTime").html("Time is halted relative to real-time")
-	else if (tmp.time.lt(1)) id("fxTime").html(`Time is ${format.normal(ON(1).div(tmp.time))}x slower than real-time`)
-	else id("fxTime").html(`Time is ${format.normal(tmp.time)}x faster than real-time`)
-	
-	update("theme_button")
-	
-	id("styleMode").href = save.options.theme + ".css"
-	
-	for (let i = 0; i < 7; i++) {
-		cursor(document.getElementsByClassName("upgrade")[i], game.save.limit.gte(game.save.limUp[i]))
-		id("limUpReq" + i).html(game.save.limUp[i] ? "Purchased":"Cost: " + format.whole(tmp.limUpCosts[i]))
+	if (id("utab_0").display) {
+		id("fxTime").html = function(){
+			if (tick.time.lte(0)) return "Time is halted relative to real-time"
+			if (tick.time.lt(1)) return `Time is ${format.normal(ON(1).div(tick.time))}x slower than real-time`
+			return `Time is ${format.normal(tick.time)}x faster than real-time`
+		}
+		
+		id("fxProdCap").html = `Production is only ${format.total(tick.timeCap)} second${grammarFrom(tick.timeCap)} long`
 	}
 	
+	if (id("utab_2").display) {
+		id("statPointEquivalent").html = `If every point were a liter of water, you would have enough to fill ${format.totalInf(save.point.mul(4))} cups`
+		id("statTimePlayed").html = format.totalTime(save.timePlayed)
+	}
+	
+	if (id("utab_4").display) {
+		id("dilaterCost").html = `Req: ${format.totalInf(tick.dilaterCost)} points`
+		id("compCost").html = `Req: ${format.total(tick.compCost)} dilater${tick.compCost.eq(1) ? "":"s"}`
+		id("timePassed").html = format.time(save.timePassed)
+		id("timePassedMax").html = save.timePassed.lt(tick.timeCap) ? "":" (maxed out)"
+	}
+	
+	id("limitTabButton").html = save.limitUnlock ? "Limit":"???"
+	
+	id("stab_5-locked").display = !save.limitUnlock
+	id("stab_5-0").display = save.limitUnlock
+	
+	cursor(id("dilaterUpg"), game.save.point.gte(game.tick.dilaterCost))
+	cursor(id("compressUpg"), game.save.dilater.gte(game.tick.compCost))
+	cursor(id("limitPrestige"), game.save.point.gte(5))
+	
+	if (id("utab_5").display) {
+		if (id("stab_5-0").display) {
+			id("limitEff").html = function(){
+				if (!save.limUp[8]) return ''
+				return `, multiplying the first Compressor Effect by ${format.normal(tick.limitEff)}`
+			}
+			
+			cursor(id("limitPrestigeText"), save.point.gte(5))
+			
+			id("limitPrestigeText").html = function(){
+				if (save.point.lt(5)) return "Req: 5ε points"
+				return `
+					Reset for ${format.whole(func.getPrestigeGain(2))} limit${grammarFrom(game.func.getPrestigeGain(2))}<br>
+					Next at ${format.total(func.getPrestigeNextReq(2))} points
+				`
+			}
+			
+			for (let i = 0; i < 7; i++) {
+				cursor(document.getElementsByClassName("upgrade limit")[i], save.limit.gte(tick.limUpCosts[i]))
+				//bought(document.getElementsByClassName("upgrade limit")[i], save.limUp[i])
+				id("limUpReq" + i).html = game.save.limUp[i] ? "Purchased":"Cost: " + format.whole(tick.limUpCosts[i])
+			}
+		}
+	}
+	
+	update("theme_button")
+	if (style.getAttribute("href") != save.options.theme + ".css") style.href = save.options.theme + ".css"
+	
 	function tagHTML(x, y) {
-		let z = document.getElementsByClassName("update " + x)
-		for (let i = 0; i < z.length; i++) z[i].innerHTML = y
+		Array.from(document.getElementsByClassName("update " + x)).forEach(function(item){
+			item.innerHTML = y
+		})
+	}
+	
+	function grammarFrom(x) {
+		return ON(x).eq(1) ? "":"s"
 	}
 }
 
 const init = function() {
 	let body = document.body
+	let func = game.func
 	let save = game.save
-	let tmp = game.tmp
 	let other = game.other
+	
+	let nameOfSeperator = ["Commas", "Quotes", "Underscore"]
 	
 	try {
 		implort(localStorage.getItem("infinite_nerf"))
 	} catch {
-		Error("Invalid Import")
+		Error("Your save file has become invalid")
 		reset()
 	}
 	
-	id("utab_0").display(0)
+	id("importScreen").display = true
+	id("resetScreen").display = true
+	
+	game.other.importScreen = {
+		display: false,
+		mousedown: false,
+		x: (document.body.clientWidth - id("importScreen").clientWidth - 4) / 2,
+		y: (document.body.clientHeight - id("importScreen").clientHeight - 4) / 2,
+	}
+	
+	game.other.resetScreen = {
+		display: false,
+		mousedown: false,
+		x: (document.body.clientWidth - id("resetScreen").clientWidth - 4) / 2,
+		y: (document.body.clientHeight - id("resetScreen").clientHeight - 4) / 2,
+	}
+	
+	id("importScreen").display = false
+	id("resetScreen").display = false
+	
+	id("utab_0").display = false
 	implort(explort())
 	tick()
 	tab(1, 0)
 	tab(4)
 	other.loading = false
 	
+	id("toggleInfinitySymbol").html = "Infinity Symbol: " + (game.save.options.infinitySymbol ? "ON" : "OFF")
+	id("switchDigitSeperator").html = "Digit Seperator: " + nameOfSeperator[game.save.options.digitSeperator]
+	
 	body.onmousedown = function(event) {
-		let originalTargetId = event.explicitOriginalTarget.id
+		let originalTargetId = event.explicitOriginalTarget?.id
 		if (originalTargetId != "importScreen" && originalTargetId != "resetScreen") return
 		other[originalTargetId].mousedown = true
 	}
@@ -572,7 +691,9 @@ const init = function() {
 	}
 	
 	setInterval(tick, 20)
-	setInterval(function(){implort(explort())}, 5000)
+	setInterval(function(){
+		if (!aprilFooled) saveGame()
+	},5000)
 }
 
 init()

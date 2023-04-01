@@ -46,6 +46,10 @@ h2, span, text, b, li {
 	cursor: pointer
 }
 
+.noOpacity {
+	opacity: 0
+}
+
 .ulCustom {
 	padding-left: 3rem;
 	margin-top: 0px
@@ -74,7 +78,7 @@ h2, span, text, b, li {
 	opacity: 0
 }
 
-.upgrade, .occUpgrade {
+.upgrade, .occUpgrade, .upgrade:hover {
 	background-color: var(--color_1);
 	border: 2px solid var(--color_2);
 	color: var(--color_2);
@@ -83,9 +87,25 @@ h2, span, text, b, li {
 	font-size: 1.6em
 }
 
+.upgrade.buttonHover:hover, .upgrade.buttonHover:hover span {
+	background-color: var(--color_2);
+	color: var(--color_1)
+}
+
 .prestige {
-	width: 200px;
+	width: 240px;
 	height: 60px
+}
+
+.prestige, .prestige:hover {
+	background-color: var(--color_1);
+	border: 2px solid var(--color_2);
+	color: var(--color_2);
+}
+
+.prestige.buttonHover:hover, .prestige.buttonHover:hover big {
+	background-color: var(--color_2);
+	color: var(--color_1)
 }
 
 #loadScreen {
@@ -130,6 +150,6 @@ h2, span, text, b, li {
 	color: var(--color_1)
 }
 
-#toggleInfinitySymbol {
+#toggleInfinitySymbol, #switchDigitSeperator {
 	cursor: pointer
 }
