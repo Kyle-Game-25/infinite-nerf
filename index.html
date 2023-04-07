@@ -10,16 +10,43 @@
 		<link id="styleMode" rel="stylesheet" type="text/css" href="light.css"/></div>
 		<div id="loadScreen">
 			<big><h1>Loading...</h1></big>
+		</div><div id="saveErrorScreen" style="background-color: white; border: 2px solid black; display: none; height: 25em; position: absolute; width: 40em">
+			<div id="saveErrorScreenHead" style="background-color: #DDD; position: absolute; width: 40em">
+				<button style="opacity: 0">X</button>
+			</div><br><br>
+			<span style="color: black;">
+				Uh oh! Your save file has become invalid!<br>
+				Would you like to reset your save file?
+			</span><br>
+			<button onclick="reset(); init(); this.parentElement.style.display = 'none'">Yes</button><button onclick="this.parentElement.style.display = 'none'">No</button>
+		</div><div id="offlineTickScreen">
+			<div id="offlineTickScreenHead">
+				<button class="buttonHover">X</button>
+			</div><br><br>
+			<span>Calculating Offline Progress...<span id="offlineTickStat"></span></span><br>
 		</div><div id="importScreen" style="display:none">
-			<button class="buttonHover" onclick="game.other.importScreen.display = false">X</button><br>
-			<span>Importing a save file will reset the previous save file</span><br>
-			<input id="importText" placeholder="Import Valid Save File here" ></input>
-			<button class="buttonHover" onclick="implort(document.getElementById('importText').value)">Import!</button>
+			<div id="importScreenHead">
+				<button class="buttonHover" onclick="game.other.screens.importScreen.display = false">X</button>
+			</div><br><br>
+			<div style="margin: 4px">
+				<span>Importing a save file will reset the previous save file</span><br>
+				<input id="importText" placeholder="Import Valid Save File here" ></input>
+				<button class="buttonHover" onclick="importText()">Import!</button>
+				<span id="importedTextResult"></span><br><br>
+				<span>You can also import with files</span><br>
+				<button class="buttonHover" onclick="document.getElementById('importedFile').click()">Browse...</button>
+				<input id="importedFile" type="file" style="display:none"></input><br>
+				<span id="importedFileStat">No file selected.</span>
+			</div>
 		</div><div id="resetScreen" style="display:none">
-			<button class="buttonHover" onclick="game.other.resetScreen.display = false">X</button><br>
-			<span>Are you sure you want to reset this save with <u>no boost</u></span><br>
-			<button class="buttonHover" onclick="game.other.resetScreen.display = false" style="font-size: 6rem">No</button>
-			<button class="buttonHover" onclick="game.other.resetScreen.display = false; reset()">Yes</button>
+			<div id="resetScreenHead">
+				<button class="buttonHover" onclick="game.other.screens.resetScreen.display = false">X</button>
+			</div><br><br>
+			<div style="margin: 2px">
+				<span>Are you sure you want to reset this save with <u>no boost</u></span><br>
+				<button class="buttonHover" onclick="game.other.screens.resetScreen.display = false" style="font-size: 6rem">No</button>
+				<button class="buttonHover" onclick="game.other.screens.resetScreen.display = false; reset()">Yes</button>
+			</div>
 		</div><div id="headerButton" style="display:none">
 			<button onclick="tab(0)" class="top">Effects</button>
 			<button onclick="tab(1)" class="top">Options</button>
@@ -28,15 +55,20 @@
 			<button onclick="tab(4)" class="top">Points</button>
 			<button onclick="tab(5)" id="limitTabButton" class="top">???</button>
 		</div><div id="utab_0" class="utab">
-			<span>Your Base Point Gain is 1</span><br>
-			<span id="fxTime">Time is 1,024x slower than real-time</span><br>
-			<span>Point Production is square rooted when greater than 1</span><br>
-			<span>Point Production is divided by <span class="update infinity_text">∞</span></span><br>
-			<span id="fxPointMult">Point Production is then multiplied by 1</span><br>
-			<span id="fxProdCap">You can only produce 0 seconds of production</span><br>
-			<span>You lose 10% of Points every second (affected by Time Speed)</span><br>
-			<span>Dilater Effect is square rooted when greater than 16</span><br>
-			<button onclick="aprilFooled = true; this.style.display = 'none'; if (game.save.compress.gt(0)) setTimeout(function(){document.body.innerHTML = '<h1>April Fools!</h1><br>Just reload the page to get back to normal'}, 10000)">???</button>
+			<b>Main Effects</b>
+			<ul class="ulCustom">
+				<li>Your Base Point Gain is 1</li>
+				<li id="fxTime">Time is 1,024x slower than real-time</li>
+				<li>Point Production is square rooted when greater than 1</li>
+				<li>Point Production is divided by <span class="update infinity_text">∞</span></li>
+				<li id="fxPointMult">Point Production is then multiplied by 1</li>
+				<li id="fxProdCap">You can only produce 0 seconds of production</li>
+				<li>You lose 10% of Points every second (affected by Time Speed)</li>
+			</ul>
+			<b>Dilater Effects</b>
+			<ul class="ulCustom">
+				<li>Dilater Effect is square rooted when greater than 16</li>
+			</ul>
 		</div><div id="utab_1" class="utab">
 			<div>
 				<button onclick="tab(1, 0)" class="sub">Saving</button>
@@ -46,12 +78,12 @@
 			</div><div id="stab_1-0">
 				<br>
 				<button onclick="saveGame()" class="buttonHover">Save</button>
-				<button onclick="game.other.resetScreen.display = !game.other.resetScreen.display" class="buttonHover">Reset</button>
+				<button onclick="game.other.screens.resetScreen.display = !game.other.screens.resetScreen.display" class="buttonHover">Reset</button>
 				<br>
 				<button onclick="exportToFile()" class="buttonHover">Export to File</button>
 				<button onclick="exportToClipboard()" class="buttonHover">Export to Clipboard</button>
 				<br>
-				<button onclick="game.other.importScreen.display = !game.other.importScreen.display" class="buttonHover">Import</button>
+				<button onclick="game.other.screens.importScreen.display = !game.other.screens.importScreen.display" class="buttonHover">Import</button>
 			</div><div id="stab_1-1">
 				<br>
 				<button onclick="game.func.activateTheme('light')" style="cursor:pointer"></button><br>
@@ -69,10 +101,16 @@
 				You have <text class="update point big">0</text> points
 			</span><br>
 			<span class="big" id="statPointEquivalent"></span>
-			<br><br><br><br>
+			<br><br><br><br><br><br>
 			<span class="big">You have played for <text id="statTimePlayed" class="big">0 seconds</text></span>
 			<br><br><br><br><br><br>
-			<big><b>Infinite Nerf - v0.1.1</b></big>
+			<big><b>The game should run at ~50 ticks per second</b></big>
+			<br><br><br><br>
+			<big><b>
+				Infinite Nerf - v0.1.2<br>
+				Last Updated: April 7, 2023<br>
+				<span id="statLastUpdated"></span> ago
+			</b></big>
 		</div><div id="utab_3" class="utab">
 			<b><big>Saving</big></b><br>
 			<span>

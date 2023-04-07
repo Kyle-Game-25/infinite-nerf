@@ -113,12 +113,22 @@ h2, span, text, b, li {
 	position: absolute
 }
 
-#importScreen, #resetScreen {
+#offlineTickScreen, #importScreen, #resetScreen {
 	background-color: var(--color_1);
 	border: 2px solid var(--color_2);
-	height: 15em;
+	height: 25em;
 	position: absolute;
-	width: 25em
+	width: 40em
+}
+
+#offlineTickScreenHead, #importScreenHead, #resetScreenHead {
+	background-color: var(--color_3);
+	position: absolute;
+	width: 40em
+}
+
+#offlineTickScreenHead > button, #importScreenHead > button, #resetScreenHead > button {
+	float: right
 }
 
 #importText {

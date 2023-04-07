@@ -1,31 +1,43 @@
 "use strict"
 
-let aprilFooled = false
-
 const ON = OmegaNum
 
 const id = function(id) {
 	let elm = document.getElementById(id)
 	
-	elm.__defineGetter__("html", function(){return elm.innerHTML})
+	Object.defineProperty(elm, "html", {
+		value: null,
+		configurable: true
+	})
 	
-	elm.__defineSetter__("html", function(html) {
-		if (typeof html == "function") {
-			elm.innerHTML = html()
-		} else if (Array.isArray(html)) {
-			elm.innerHTML = html.join('')
-		} else {
-			elm.innerHTML = html
+	Object.defineProperty(elm, "html", {
+		get() {
+			return elm.innerHTML
+		},
+		set(value) {
+			if (typeof value == "function") {
+				elm.innerHTML = value()
+			} else if (Array.isArray(value)) {
+				elm.innerHTML = value.join()
+			} else {
+				elm.innerHTML = value
+			}
 		}
 	})
 	
-	elm.__defineGetter__("display", function(){
-		if (elm.style.display == "none") return false
-		return true
+	Object.defineProperty(elm, "display", {
+		value: null,
+		configurable: true
 	})
 	
-	elm.__defineSetter__("display", function(display) {
-		elm.style.display = display ? "":"none"
+	Object.defineProperty(elm, "display", {
+		get() {
+			if (elm.style.display === "none") return false
+			return true
+		},
+		set(value) {
+			elm.style.display = value ? "" : "none"
+		}
 	})
 	
 	return elm
@@ -56,6 +68,7 @@ const game = {
 	other: {
 		loading: true,
 		saveError: false,
+		screens: {},
 		randomMsg: [
 			"This game is about long timewalls. Why are you even playing this?",
 			"Yes! I just got an infinitesimally small amount of points",
@@ -66,7 +79,7 @@ const game = {
 			"Dilation? More like... uh... I don't have a funny joke",
 			"Compressors compress time, so wouldn't it make the Production Cap smaller?",
 			"This game does not use cookies to store information."
-		],
+		]
 	}
 }
 
@@ -254,12 +267,12 @@ const cursor = function(elm, req) {
 
 const reset = function() {
 	game.save = [game.start][0]
-	implort(explort())
+	implort(explort(), true)
 }
 
 const implort = function(save) {
 	if (save.substr(0, 2) != "ey") {
-		alert("Uh oh! There is an error with your save file. We will be trying to fix it")
+		disputeError()
 		return
 	}
 	
@@ -268,11 +281,15 @@ const implort = function(save) {
 	
 	save.lastTick = Date.now()
 	
-	if (game.other.saveError) alert("Uh oh! There is an error with your save file. We will be trying to fix it")
+	if (game.other.saveError) disputeError()
 	game.other.saveError = false
 	game.save = save
 	
 	localStorage.setItem("infinite_nerf", explort())
+	
+	function disputeError() {
+		throw "SaveError: The save file has become invalid" 
+	}
 	
 	function setObject(x, s) {
 		for (let item in s) {
@@ -285,6 +302,16 @@ const implort = function(save) {
 			} else if (x[item] == undefined) x[item] = s[item]
 			else if (typeof x[item] == "object") setObject(x[item], s[item])
 		}
+	}
+}
+
+const importText = function() {
+	id("importedTextResult").html = "Import Successful!"
+	
+	try {
+		implort(document.getElementById('importText').value)
+	} catch {
+		id("importedTextResult").html = "Import Failed!"
 	}
 }
 
@@ -351,7 +378,6 @@ game.func = {
 		} else if (id == 1 && game.save.dilater.gte(game.tick.compCost)) {
 			game.func.reset(1)
 			game.save.compress = game.save.compress.add(1)
-			if (aprilFooled) setTimeout(function(){document.body.innerHTML = "<h1>April Fools!</h1><br>Just reload the page to get back to normal"}, 10000)
 		} else if (id == 2 && game.save.point.gte(5)) {
 			game.save.limit = game.save.limit.add(game.func.getPrestigeGain(2))
 			game.func.reset(2)
@@ -403,7 +429,6 @@ game.tick = {
 		return eff
 	},
 	get tuonGain() {
-		if (aprilFooled) return game.save.tuon.add(1).mul(2)
 		return game.save.tuon.pow(0.85).add(1).mul(game.tick.time)
 	},
 	get freeDilater() {
@@ -418,7 +443,7 @@ game.tick = {
 	get dilaterEff() {
 		let eff = game.save.dilater.add(game.tick.freeDilater).mul(game.tick.compEff2).max(0)
 		if (game.save.limUp[2]) eff = eff.mul(2)
-		if (game.save.limUp[4]) eff = eff.mul(2)
+		if (game.save.limUp[5]) eff = eff.mul(2)
 		if (eff.gt(16)) eff = eff.sqrt().mul(4)
 		return eff
 	},
@@ -439,8 +464,9 @@ game.tick = {
 		return eff
 	},
 	get compEff2() {
-		let eff = game.save.compress.add(game.tick.freeComp).sqrt()
-		if (game.save.limUp[7]) eff = game.save.compress.add(game.tick.freeComp).root(1.5)
+		let eff = game.save.compress.add(game.tick.freeComp)
+		if (game.save.limUp[7]) eff = eff.root(1.5)
+		else eff = eff.sqrt()
 		return eff
 	},
 	get limitEff() {
@@ -457,7 +483,6 @@ game.tick = {
 	},
 	get pointGain() {
 		let gain = game.tick.time
-		if (aprilFooled) gain = ON(0)
 		if (gain.gt(1)) gain = gain.sqrt()
 		return gain
 	},
@@ -492,22 +517,26 @@ const tick = function() {
 	let save = game.save
 	let tick = game.tick
 	let other = game.other
+	let customScreens = other.screens
 	
-	save.diff += Date.now()-save.lastTick
+	save.diff += Date.now() - save.lastTick
 	let takeTick = Math.max(Math.ceil(save.diff/10), 50)
-	if (save.diff-takeTick < 0) takeTick = save.diff
+	
+	if (save.diff - takeTick < 0) takeTick = save.diff
+	
 	save.lastTick = Date.now()
 	save.diff -= takeTick
 	let diff = ON(takeTick).div(1e3)
 	
 	// Updating variables
 	
-	if (game.save.point.gte(5)) game.save.limitUnlock = true
+	if (save.diff > 10000) {
+		customScreens.offlineTickScreen.display = true
+	} else {
+		customScreens.offlineTickScreen.display = false
+	}
 	
-	other.importScreen.x = Math.max(Math.min(other.importScreen.x, document.body.clientWidth-id("importScreen").clientWidth-4), 0)
-	other.importScreen.y = Math.max(Math.min(other.importScreen.y, document.body.clientHeight-id("importScreen").clientHeight-4), 0)
-	other.resetScreen.x = Math.max(Math.min(other.resetScreen.x, document.body.clientWidth-id("resetScreen").clientWidth-4), 0)
-	other.resetScreen.y = Math.max(Math.min(other.resetScreen.y, document.body.clientHeight-id("resetScreen").clientHeight-4), 0)
+	if (game.save.point.gte(5)) game.save.limitUnlock = true
 	
 	// Production
 	
@@ -521,6 +550,20 @@ const tick = function() {
 	save.timePassed = save.timePassed.add(tick.time.mul(diff))
 	
 	// Display part
+	
+	for (let data in customScreens) {
+		let customScreen = customScreens[data]
+		
+		customScreen.x = Math.max(Math.min(customScreen.x, document.body.clientWidth - id(data).clientWidth - 4), 0)
+		customScreen.y = Math.max(Math.min(customScreen.y, document.body.clientHeight - id(data).clientHeight - 4), 0)
+		
+		if (customScreen.mousedown) id(data + "Head").style.cursor = "grabbing"
+		else id(data + "Head").style.cursor = "grab"
+		
+		id(data).style.transform = "translate(" + customScreen.x + "px, " + customScreen.y + "px)"
+		id(data).display = customScreen.display
+	}
+	
 	let pointGain = tick.pointGain.sub(ON.pow(0.9,tick.time).neg().add(1).mul(save.point.div(100)))
 	let style = id("styleMode")
 	
@@ -543,17 +586,6 @@ const tick = function() {
 	id("headerButton").display = true
 	if (other.loading) id("utab_0").display = true
 	
-	id("importScreen").style.transform = `translate(${other.importScreen.x}px, ${other.importScreen.y}px)`
-	id("importScreen").display = other.importScreen.display
-	id("resetScreen").style.transform = `translate(${other.resetScreen.x}px, ${other.resetScreen.y}px)`
-	id("resetScreen").display = other.resetScreen.display
-	
-	if (other.importScreen.mousedown) id("importScreen").style.cursor = "grabbing"
-	else id("importScreen").style.cursor = "grab"
-	
-	if (other.resetScreen.mousedown) id("resetScreen").style.cursor = "grabbing"
-	else id("resetScreen").style.cursor = "grab"
-	
 	if (id("utab_0").display) {
 		id("fxTime").html = function(){
 			if (tick.time.lte(0)) return "Time is halted relative to real-time"
@@ -567,6 +599,7 @@ const tick = function() {
 	if (id("utab_2").display) {
 		id("statPointEquivalent").html = `If every point were a liter of water, you would have enough to fill ${format.totalInf(save.point.mul(4))} cups`
 		id("statTimePlayed").html = format.totalTime(save.timePlayed)
+		id("statLastUpdated").html = format.totalTime(Math.round((Date.now() - 1680847200000) / 1000))
 	}
 	
 	if (id("utab_4").display) {
@@ -603,8 +636,7 @@ const tick = function() {
 			}
 			
 			for (let i = 0; i < 7; i++) {
-				cursor(document.getElementsByClassName("upgrade limit")[i], save.limit.gte(tick.limUpCosts[i]))
-				//bought(document.getElementsByClassName("upgrade limit")[i], save.limUp[i])
+				cursor(document.getElementsByClassName("upgrade limit")[i], save.limit.gte(tick.limUpCosts[i]) && !game.save.limUp[i])
 				id("limUpReq" + i).html = game.save.limUp[i] ? "Purchased":"Cost: " + format.whole(tick.limUpCosts[i])
 			}
 		}
@@ -625,39 +657,39 @@ const tick = function() {
 }
 
 const init = function() {
+	const fileReader = new FileReader()
 	let body = document.body
 	let func = game.func
 	let save = game.save
 	let other = game.other
 	
+	let customScreens = ["importScreen", "resetScreen", "offlineTickScreen"]
 	let nameOfSeperator = ["Commas", "Quotes", "Underscore"]
 	
+	customScreens.forEach(function(customScreen, order){
+		id(customScreen).display = true
+		
+		other.screens[customScreen] = {
+			display: false,
+			mousedown: false,
+			refX: 0,
+			refY: 0,
+			x: (document.body.clientWidth - id(customScreen).clientWidth - 4) / 2,
+			y: (document.body.clientHeight - id(customScreen).clientHeight - 4) / 2,
+		}
+		
+		id(customScreen).display = false
+	})
+	
 	try {
+		if (localStorage.getItem("infinite_nerf") === null) reset()
 		implort(localStorage.getItem("infinite_nerf"))
 	} catch {
-		Error("Your save file has become invalid")
-		reset()
+		id("saveErrorScreen").display = true
+		tab(1, 0)
+		tab(4)
+		return console.error("Uh oh! Your save file has become invalid!")
 	}
-	
-	id("importScreen").display = true
-	id("resetScreen").display = true
-	
-	game.other.importScreen = {
-		display: false,
-		mousedown: false,
-		x: (document.body.clientWidth - id("importScreen").clientWidth - 4) / 2,
-		y: (document.body.clientHeight - id("importScreen").clientHeight - 4) / 2,
-	}
-	
-	game.other.resetScreen = {
-		display: false,
-		mousedown: false,
-		x: (document.body.clientWidth - id("resetScreen").clientWidth - 4) / 2,
-		y: (document.body.clientHeight - id("resetScreen").clientHeight - 4) / 2,
-	}
-	
-	id("importScreen").display = false
-	id("resetScreen").display = false
 	
 	id("utab_0").display = false
 	implort(explort())
@@ -666,34 +698,83 @@ const init = function() {
 	tab(4)
 	other.loading = false
 	
+	setInterval(tick, 20)
+	setInterval(saveGame, 5000)
+	
+	customScreens = other.screens
+	
 	id("toggleInfinitySymbol").html = "Infinity Symbol: " + (game.save.options.infinitySymbol ? "ON" : "OFF")
 	id("switchDigitSeperator").html = "Digit Seperator: " + nameOfSeperator[game.save.options.digitSeperator]
 	
 	body.onmousedown = function(event) {
 		let originalTargetId = event.explicitOriginalTarget?.id
-		if (originalTargetId != "importScreen" && originalTargetId != "resetScreen") return
-		other[originalTargetId].mousedown = true
-	}
-	
-	body.onmouseup = function(event) {
-		other.importScreen.mousedown = false
-		other.resetScreen.mousedown = false
-	}
-	
-	body.onmousemove = function(event) {
-		if (other.importScreen.mousedown && other.importScreen.display) {
-			other.importScreen.x += event.movementX
-			other.importScreen.y += event.movementY
-		} else if (other.resetScreen.mousedown && other.resetScreen.display) {
-			other.resetScreen.x += event.movementX
-			other.resetScreen.y += event.movementY
+		let isNotScreenHead = true
+		
+		if (originalTargetId === "offlineTickScreenHead") isNotScreenHead = false
+		if (originalTargetId === "importScreenHead") isNotScreenHead = false
+		if (originalTargetId === "resetScreenHead") isNotScreenHead = false
+		
+		if (isNotScreenHead) return
+		
+		customScreens[originalTargetId.replace(/(Head)/, '')].mousedown = true
+		
+		for (let data in customScreens) {
+			let customScreen = customScreens[data]
+			customScreen.refX = event.clientX - customScreen.x
+			customScreen.refY = event.clientY - customScreen.y
 		}
 	}
 	
-	setInterval(tick, 20)
-	setInterval(function(){
-		if (!aprilFooled) saveGame()
-	},5000)
+	body.onmouseup = function(event) {
+		for (let data in customScreens) {
+			customScreens[data].mousedown = false
+		}
+	}
+	
+	body.onmousemove = function(event) {
+		for (let data in customScreens) {
+			let customScreen = customScreens[data]
+			
+			if (customScreen.mousedown && customScreen.display) {
+				customScreen.x = event.clientX - customScreen.refX
+				customScreen.y = event.clientY - customScreen.refY
+			}
+			
+			customScreen.x = Math.max(Math.min(customScreen.x, document.body.clientWidth - id(data).clientWidth - 4), 0)
+			customScreen.y = Math.max(Math.min(customScreen.y, document.body.clientHeight - id(data).clientHeight - 4), 0)
+		}
+	}
+	
+	body.ontouchmove = function(event) {
+		body.onmousemove(event.touches[0])
+	}
+	
+	id("importedFile").onchange = function(event) {
+		let files = id("importedFile").files
+		let file = files[0]
+		
+		if (files.length === 1) {
+			fileReader.onload = function(){
+				let result = fileReader.result
+				id("importedFileStat").html = file.name + " - " + file.size + " bytes"
+				
+				try {
+					implort(result)
+					id("importedFileStat").html += "<br>Import Successful!"
+				} catch {
+					id("importedFileStat").html += "<br>Import Failed!"
+				}
+			}
+			
+			fileReader.readAsText(file)
+		} else if (files.length < 1) {
+			id("importedFileStat").html = "No file selected."
+		} else if (files.length > 1) {
+			id("importedFileStat").html = "Too many files selected."
+		} else {
+			id("importedFileStat").html = "The file data is corrupted."
+		}
+	}
 }
 
 init()
